@@ -1,8 +1,0 @@
-ext {
-    extName = 'PornHD3x'
-    extClass = '.PornHD3x'
-    extVersionCode = 1
-    isNsfw = true
-}
-
-apply from: "$rootDir/common.gradle"
