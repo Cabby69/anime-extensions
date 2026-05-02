@@ -63,7 +63,7 @@ class PornHD3x :
 
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
-override fun videoListParse(response: Response): List<Video> {
+    override fun videoListParse(response: Response): List<Video> {
     val document = response.asJsoup()
     val sourcesJson = document.select("script:containsData(html5player.setVideoUrl)").toString()
 
