@@ -17,7 +17,9 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-class PornHD3x : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
+class PornHD3x :
+    ParsedAnimeHttpSource(),
+    ConfigurableAnimeSource {
 
     override val name = "pornhd3x"
     override val baseUrl = "https://pornhd4k.net/"
@@ -32,8 +34,8 @@ class PornHD3x : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override fun popularAnimeRequest(page: Int): Request =
         GET("$baseUrl/new/$page")
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
+    override fun popularAnimeFromElement(element: Element): SAnime =
+        SAnime.create().apply {
             setUrlWithoutDomain(
                 "$baseUrl${element.select("div.thumb-inside div.thumb a").attr("href")}",
             )
@@ -41,7 +43,6 @@ class PornHD3x : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             thumbnail_url =
                 element.select("div.thumb-inside div.thumb a img").attr("data-src")
         }
-    }
 
     override fun popularAnimeNextPageSelector(): String =
         "a.no-page.next-page"
@@ -68,9 +69,7 @@ class PornHD3x : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         val hls = sources.substringAfter("setVideoHLS('", "").substringBefore("')")
         val high = sources.substringAfter("VideoUrlHigh('", "").substringBefore("')")
 
-        if (low.isBlank() && hls.isBlank() && high.isBlank()) {
-            return emptyList()
-        }
+        if (low.isBlank() && hls.isBlank() && high.isBlank()) return emptyList()
 
         return listOf(
             Video(low, "Low", low),
