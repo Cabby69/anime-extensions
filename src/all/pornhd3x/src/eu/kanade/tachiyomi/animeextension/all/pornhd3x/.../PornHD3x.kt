@@ -3,7 +3,11 @@ package eu.kanade.tachiyomi.animeextension.all.pornhd3x
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.model.*
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
+import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -64,7 +68,9 @@ class PornHD3x : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         val hls = sources.substringAfter("setVideoHLS('", "").substringBefore("')")
         val high = sources.substringAfter("VideoUrlHigh('", "").substringBefore("')")
 
-        if (low.isBlank() && hls.isBlank() && high.isBlank()) return emptyList()
+        if (low.isBlank() && hls.isBlank() && high.isBlank()) {
+            return emptyList()
+        }
 
         return listOf(
             Video(low, "Low", low),
