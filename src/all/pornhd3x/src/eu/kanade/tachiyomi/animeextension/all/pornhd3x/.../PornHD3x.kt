@@ -63,18 +63,24 @@ class PornHD3x :
 
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        val sourcesJson = document.select("script:containsData(html5player.setVideoUrl)").toString()
-        val lowQuality = sourcesJson.substringAfter("VideoUrlLow('").substringBefore("')")
-        val hlsQuality = sourcesJson.substringAfter("setVideoHLS('").substringBefore("')")
-        val highQuality = sourcesJson.substringAfter("VideoUrlHigh('").substringBefore("')")
-        return listOf(
-            Video(lowQuality, "Low", lowQuality),
-            Video(hlsQuality, "HLS", hlsQuality),
-            Video(highQuality, "High", highQuality),
-        )
+override fun videoListParse(response: Response): List<Video> {
+    val document = response.asJsoup()
+    val sourcesJson = document.select("script:containsData(html5player.setVideoUrl)").toString()
+
+    val lowQuality = sourcesJson.substringAfter("VideoUrlLow('", "").substringBefore("')")
+    val hlsQuality = sourcesJson.substringAfter("setVideoHLS('", "").substringBefore("')")
+    val highQuality = sourcesJson.substringAfter("VideoUrlHigh('", "").substringBefore("')")
+
+    if (lowQuality.isBlank() && hlsQuality.isBlank() && highQuality.isBlank()) {
+        return emptyList()
     }
+
+    return listOf(
+        Video(lowQuality, "Low", lowQuality),
+        Video(hlsQuality, "HLS", hlsQuality),
+        Video(highQuality, "High", highQuality),
+    )
+}
 
     override fun videoListSelector() = throw Exception("not used")
 
@@ -104,7 +110,7 @@ class PornHD3x :
         val tagFilter = filters.find { it is Tags } as Tags
         return when {
             query.isNotBlank() -> GET("$baseUrl/?k=$query&p=$page", headers)
-            tagFilter.state.isNotBlank() -> GET("$baseUrl/tags/${tagFilter.state}/$page ")
+            tagFilter.state.isNotBlank() -> GET("$baseUrl/tags/${tagFilter.state}/$page")
             else -> GET("$baseUrl/new/$page", headers)
         }
     }
