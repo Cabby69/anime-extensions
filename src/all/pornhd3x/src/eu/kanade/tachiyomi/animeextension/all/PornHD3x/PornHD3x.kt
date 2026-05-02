@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.all.PornHD3x
+package eu.kanade.tachiyomi.animeextension.all.pornhd3x
 
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
@@ -17,11 +17,11 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-class PornHD3x :
+class pornhd3x :
     ParsedAnimeHttpSource(),
     ConfigurableAnimeSource {
 
-    override val name = "PornHD3x"
+    override val name = "pornhd3x"
 
     override val baseUrl = "https://pornhd4k.net/"
 
