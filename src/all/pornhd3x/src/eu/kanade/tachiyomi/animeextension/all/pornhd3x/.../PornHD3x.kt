@@ -3,11 +3,7 @@ package eu.kanade.tachiyomi.animeextension.all.pornhd3x
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.model.AnimeFilter
-import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.SAnime
-import eu.kanade.tachiyomi.animesource.model.SEpisode
-import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.animesource.model.*
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -17,9 +13,7 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-class PornHD3x :
-    ParsedAnimeHttpSource(),
-    ConfigurableAnimeSource {
+class PornHD3x : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     override val name = "pornhd3x"
     override val baseUrl = "https://pornhd4k.net/"
@@ -35,52 +29,47 @@ class PornHD3x :
         GET("$baseUrl/new/$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(
-            "$baseUrl${element.select("div.thumb-inside div.thumb a").attr("href")}",
-        )
-        anime.title = element.select("div.thumb-under p.title").text()
-        anime.thumbnail_url =
-            element.select("div.thumb-inside div.thumb a img").attr("data-src")
-        return anime
+        return SAnime.create().apply {
+            setUrlWithoutDomain(
+                "$baseUrl${element.select("div.thumb-inside div.thumb a").attr("href")}",
+            )
+            title = element.select("div.thumb-under p.title").text()
+            thumbnail_url =
+                element.select("div.thumb-inside div.thumb a img").attr("data-src")
+        }
     }
 
     override fun popularAnimeNextPageSelector(): String =
         "a.no-page.next-page"
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        return listOf(
+    override fun episodeListParse(response: Response): List<SEpisode> =
+        listOf(
             SEpisode.create().apply {
                 name = "Video"
                 setUrlWithoutDomain(response.request.url.toString())
                 date_upload = System.currentTimeMillis()
             },
         )
-    }
 
     override fun episodeListSelector() = throw Exception("not used")
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val sourcesJson =
-            document.select("script:containsData(html5player.setVideoUrl)").toString()
+        val sources = document
+            .select("script:containsData(html5player.setVideoUrl)")
+            .toString()
 
-        val lowQuality =
-            sourcesJson.substringAfter("VideoUrlLow('", "").substringBefore("')")
-        val hlsQuality =
-            sourcesJson.substringAfter("setVideoHLS('", "").substringBefore("')")
-        val highQuality =
-            sourcesJson.substringAfter("VideoUrlHigh('", "").substringBefore("')")
+        val low = sources.substringAfter("VideoUrlLow('", "").substringBefore("')")
+        val hls = sources.substringAfter("setVideoHLS('", "").substringBefore("')")
+        val high = sources.substringAfter("VideoUrlHigh('", "").substringBefore("')")
 
-        if (lowQuality.isBlank() && hlsQuality.isBlank() && highQuality.isBlank()) {
-            return emptyList()
-        }
+        if (low.isBlank() && hls.isBlank() && high.isBlank()) return emptyList()
 
         return listOf(
-            Video(lowQuality, "Low", lowQuality),
-            Video(hlsQuality, "HLS", hlsQuality),
-            Video(highQuality, "High", highQuality),
+            Video(low, "Low", low),
+            Video(hls, "HLS", hls),
+            Video(high, "High", high),
         )
     }
 
@@ -90,37 +79,16 @@ class PornHD3x :
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "HLS") ?: return this
-
-        val ordered = mutableListOf<Video>()
-        var index = 0
-
-        for (video in this) {
-            if (video.quality == quality) {
-                ordered.add(index, video)
-                index++
-            } else {
-                ordered.add(video)
-            }
-        }
-        return ordered
+        return sortedByDescending { it.quality == quality }
     }
 
-    override fun searchAnimeRequest(
-        page: Int,
-        query: String,
-        filters: AnimeFilterList,
-    ): Request {
-        val tagFilter = filters.find { it is Tags } as Tags
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val tag = filters.find { it is Tags } as Tags
 
         return when {
-            query.isNotBlank() ->
-                GET("$baseUrl/?k=$query&p=$page", headers)
-
-            tagFilter.state.isNotBlank() ->
-                GET("$baseUrl/tags/${tagFilter.state}/$page")
-
-            else ->
-                GET("$baseUrl/new/$page", headers)
+            query.isNotBlank() -> GET("$baseUrl/?k=$query&p=$page", headers)
+            tag.state.isNotBlank() -> GET("$baseUrl/tags/${tag.state}/$page")
+            else -> GET("$baseUrl/new/$page", headers)
         }
     }
 
@@ -133,8 +101,8 @@ class PornHD3x :
     override fun searchAnimeSelector(): String =
         popularAnimeSelector()
 
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
+    override fun animeDetailsParse(document: Document): SAnime =
+        SAnime.create().apply {
             title = document.select("h2.page-title").text()
             description = ""
             genre =
@@ -142,22 +110,22 @@ class PornHD3x :
                     .joinToString { it.text() }
             status = SAnime.COMPLETED
         }
-    }
 
     override fun latestUpdatesNextPageSelector() = throw Exception("not used")
     override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
     override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
     override fun latestUpdatesSelector() = throw Exception("not used")
 
-    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        AnimeFilter.Header("Search by text does not affect the filter"),
-        Tags("Tag"),
-    )
+    override fun getFilterList(): AnimeFilterList =
+        AnimeFilterList(
+            AnimeFilter.Header("Search by text does not affect the filter"),
+            Tags("Tag"),
+        )
 
     internal class Tags(name: String) : AnimeFilter.Text(name)
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        val pref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = arrayOf("High", "Low", "HLS")
@@ -166,13 +134,10 @@ class PornHD3x :
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
+                preferences.edit().putString(key, newValue as String).commit()
+                true
             }
         }
-
-        screen.addPreference(videoQualityPref)
+        screen.addPreference(pref)
     }
 }
