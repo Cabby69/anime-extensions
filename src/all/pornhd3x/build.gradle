@@ -1,7 +1,3 @@
-android {
-    namespace "eu.kanade.tachiyomi.animeextension.all.pornhd3x"
-}
-
 ext {
     extName = 'PornHD3x'
     extClass = '.PornHD3x'
