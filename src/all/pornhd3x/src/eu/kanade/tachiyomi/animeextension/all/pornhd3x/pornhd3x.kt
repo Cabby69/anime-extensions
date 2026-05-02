@@ -17,7 +17,7 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-class pornhd3x :
+class PornHD3x :
     ParsedAnimeHttpSource(),
     ConfigurableAnimeSource {
 
